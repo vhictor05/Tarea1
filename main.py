@@ -78,6 +78,19 @@ def completar_mision(id: int, db: Session = Depends(get_db)):
     db.refresh(personaje)
     return personaje
 
+@app.get("/personajes/{personaje_id}/misiones", response_model=list[schemas.Mision])
+def listar_misiones_personaje(
+    personaje_id: int,
+    db: Session = Depends(get_db)
+):
+    personaje = db.query(models.Personaje).filter(models.Personaje.id == personaje_id).first()
+    if not personaje:
+        raise HTTPException(status_code=404, detail="Personaje no encontrado")
+    
+    return personaje.misiones  # Como es una lista, ya respeta el orden de inserción
+
+
+
 @app.delete("/misiones/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_mision(id: int, db: Session = Depends(get_db)):
     mision = db.query(models.Mision).filter(models.Mision.id == id).first()
@@ -89,9 +102,10 @@ def eliminar_mision(id: int, db: Session = Depends(get_db)):
     for personaje in mision.personajes:
         personaje.misiones.remove(mision)
 
-    db.delete(misiones)
+    db.delete(mision)
     db.commit()
     return
+
 
 
 @app.delete("/personajes/{id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -108,6 +122,8 @@ def eliminar_personaje(id: int, db: Session = Depends(get_db)):
     db.delete(personaje)
     db.commit()
     return
+
+
 
 
 
